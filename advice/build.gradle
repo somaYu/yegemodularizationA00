@@ -1,0 +1,22 @@
+apply from: "${rootProject.rootDir}/common_config.gradle"
+
+project.ext.setLibConfig project
+//project.ext.setAppConfig project
+android {
+    project.ext.setConfig0 project
+    defaultConfig {
+        versionCode 1
+        versionName "1.0"
+        consumerProguardFiles "proguard-rules.pro"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile project(':base')
+}

@@ -1,0 +1,108 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// 相当于一个变量类，其中属性可看做类中的静态变量
+project.ext {
+    compileSdkVersion25 = 25
+    buildToolsVersion25 = "25.0.2"
+    minSdkVersion14 = 14
+    targetSdkVersion25 = 25
+    applicationId = "material.com.gank"
+
+    // 变量提太多了，反而显得有点蠢
+
+    isDebug = false;
+    isLib = false;
+
+    // 子开关
+    // true则setting独立
+    isSettingDebug = false;
+
+    // 子开关
+    // true则news独立
+    isNewsDebug = false;
+
+    // 配置根节点
+    setConfig0 = {
+        extension ->
+            setAndroidConfig extension.android
+            setDependencies extension.dependencies
+    }
+
+    // 配置Android
+    setAndroidConfig = {
+        extension ->
+            extension.compileSdkVersion 25
+            extension.buildToolsVersion "25.0.2"
+            extension.defaultConfig {
+                targetSdkVersion 25
+
+                testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+                javaCompileOptions {
+                    annotationProcessorOptions {
+                        arguments = [moduleName: extension.project.getName()]
+                    }
+                }
+            }
+
+            extension.buildTypes {
+                debug {
+                    extension.defaultConfig { minSdkVersion 21 }
+                }
+                release {
+                    extension.defaultConfig { minSdkVersion 14 }
+                }
+            }
+
+            extension.dataBinding {
+                enabled = true
+            }
+
+            extension.project.tasks.whenTaskAdded { task ->
+                if (task.name.contains("lint")//不启动lint代码扫描潜在bug可以使用
+                        || task.name.equals("clean")
+                        || task.name.contains("Aidl") //项目中有用到aidl则不可以舍弃这个任务
+                        || task.name.contains("mockableAndroidJar")//用不到测试的时候就可以先关闭
+                        || task.name.contains("UnitTest")//用不到测试的时候就可以先关闭
+                        || task.name.contains("AndroidTest")//用不到NDK和JNI的也关闭掉
+                        || task.name.contains("Ndk")
+                        || task.name.contains("Jni")
+                ) {
+                    task.enabled = false
+                }
+            }
+    }
+
+    // 配置依赖
+    setDependencies = {
+        extension ->
+            extension.compile fileTree(dir: 'libs', include: ['*.jar'])
+            extension.annotationProcessor 'com.alibaba:arouter-compiler:1.1.4'
+    }
+
+    // 配置App
+    setAppConfig = {
+        extension ->
+            extension.apply plugin: 'com.android.application'
+            extension.description "app"
+            setAndroidConfig extension.android
+            setDependencies extension.dependencies
+    }
+
+    // 配置Lib
+    setLibConfig = {
+        extension ->
+            extension.apply plugin: 'com.android.library'
+            extension.description "lib"
+            setAndroidConfig extension.android
+            extension.android {
+                defaultConfig {
+                    // 默认lib只发release
+                    defaultPublishConfig 'release'
+                    publishNonDefault true
+                }
+            }
+            setDependencies extension.dependencies
+
+    }
+
+}

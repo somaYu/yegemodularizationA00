@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="material.com.top">
+
+    <application
+        android:name=".app.GankApplication"
+        android:allowBackup="true"
+        android:excludeFromRecents="true"
+        android:label="${app_name}"
+        tools:replace="label"
+        android:supportsRtl="true">
+        <meta-data android:name="verNum" android:value="${verNum}"/>
+        <meta-data android:name="channel" android:value="${channel}"/>
+        <meta-data android:name="setting_info" android:value="${setting_info}"/>
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="material.com.top.MAIN" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

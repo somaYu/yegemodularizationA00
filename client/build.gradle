@@ -1,0 +1,138 @@
+apply from: "${rootProject.rootDir}/common_config.gradle"
+//apply plugin: 'com.android.application'
+apply plugin: 'AndResGuard'
+
+project.ext.setAppConfig project
+
+static def buildTime() {
+    return new Date().format("yyyyMMdd");
+}
+
+android {
+
+    // 这玩意还必须定义在前面
+    signingConfigs {
+        cang_wang {
+            keyAlias 'cang_wang'
+            keyPassword 'ling123456'
+            storeFile file('../cang_wang.jks')
+            storePassword 'ling123456'
+        }
+    }
+
+    defaultConfig {
+        if (!project.ext.isLib) {
+            applicationId project.ext.applicationId
+        }
+
+        versionCode 1
+        versionName "1.0"
+
+        //打包时间
+        resValue "string", "build_time", buildTime()
+
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro', '../proguard-common-rules.pro'
+        }
+        release {
+            // Proguard
+            minifyEnabled true
+            // 缩减resource文件
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro', '../proguard-common-rules.pro'
+            //签名
+            signingConfig signingConfigs.cang_wang
+//            proguardFile '/Users/air/Desktop/Android/MyJob/Gank/client/proguard-rules.pro'
+        }
+    }
+
+    productFlavors {
+        client {
+            buildConfigField "String", "advice_url", "\"https://github.com/cangwang\""
+            manifestPlaceholders = [
+                    channel     : "10086",  //渠道号
+                    verNum      : "1",       //版本号
+                    app_name    : "Gank",   //app名
+                    setting_info: "material.com.settings.SettingInfo" //设置数据文件
+            ]
+            dependencies {
+                if (!project.ext.isSettingDebug) {
+                    debugCompile project(path: ':settings', configuration: "debug")
+                    releaseCompile project(path: ':settings', configuration: "release")
+                    debugCompile project(path: ':submit', configuration: "debug")
+                    releaseCompile project(path: ':submit', configuration: "release")
+                }
+            }
+        }
+        server {
+            if (!project.ext.isLib) {
+                applicationId project.ext.applicationId + '.server' //appId
+            }
+            buildConfigField "String", "advice_url", "\"https://github.com/cangwang/Gank\""
+            manifestPlaceholders = [
+                    channel     : "10087",   //渠道号
+                    verNum      : "1",        //版本号
+                    app_name    : "Gank服务版",   //app名
+                    setting_info: "material.com.server_settings.ServerSettingInfo"  //设置数据文件
+            ]
+            //            project.dependencies{
+//                debugCompile project(path:':server_settings',configuration:"serverDebug")
+//                releaseCompile project(path:':server_settings',configuration:"serverRelease")
+//            }
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    if (!project.ext.isNewsDebug) {
+        debugCompile project(path: ':news', configuration: "debug")
+        releaseCompile project(path: ':news', configuration: "release")
+    }
+    debugCompile project(path: ':web', configuration: "debug")
+    releaseCompile project(path: ':web', configuration: "release")
+    debugCompile project(path: ':advice', configuration: "debug")
+    releaseCompile project(path: ':advice', configuration: "release")
+    annotationProcessor 'com.alibaba:arouter-compiler:1.1.1'
+}
+
+// 微信混淆方案
+andResGuard {
+    // mappingFile = file("./resource_mapping.txt")
+    mappingFile = null
+    // 当你使用v2签名的时候，7zip压缩是无法生效的。
+    use7zip = true
+    useSign = true
+    // 打开这个开关，会keep住所有资源的原始路径，只混淆资源的名字
+    keepRoot = false
+    whiteList = [
+            // for your icon
+            "R.drawable.icon",
+            // for fabric
+            "R.string.com.crashlytics.*",
+            // for google-services
+            "R.string.google_app_id",
+            "R.string.gcm_defaultSenderId",
+            "R.string.default_web_client_id",
+            "R.string.ga_trackingId",
+            "R.string.firebase_database_url",
+            "R.string.google_api_key",
+            "R.string.google_crash_reporting_api_key"
+    ]
+    compressFilePattern = [
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "*.gif",
+            "resources.arsc"
+    ]
+    sevenzip {
+        artifact = 'com.tencent.mm:SevenZip:1.2.3'
+        //path = "/usr/local/bin/7za"
+    }
+}
